@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>El Juego de las Sílabas con Palmas</title>
+  <!-- Tipografías amigables e infantiles -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Fredoka', 'sans-serif'],
+            body: ['Nunito', 'sans-serif'],
+          },
+          colors: {
+            'negro-profundo': '#0B090C',
+            'negro-tarjeta': '#161118',
+            'negro-suave': '#231A26',
+            'rosa-pastel': '#FFC2E2',
+            'rosa-chicle': '#FF69B4',
+            'rosa-fucsia': '#FF1493',
+            'rosa-brillo': '#FF85C8',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Estilos personalizados para animaciones de palmas, brillo y confeti */
+    body {
+      background-color: #0B090C;
+      background-image:
+        radial-gradient(circle at 15% 20%, rgba(255, 20, 147, 0.16) 0%, transparent 35%),
+        radial-gradient(circle at 85% 80%, rgba(255, 105, 180, 0.16) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(255, 194, 226, 0.05) 0%, transparent 60%);
+      font-family: 'Nunito', sans-serif;
+      color: #FFF0F7;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    .font-fredoka {
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    /* Botones estilo arcade infantil con volumen 3D */
+    .btn-3d-pink {
+      background: linear-gradient(180deg, #FF69B4 0%, #FF1493 100%);
+      box-shadow: 0 6px 0 #9E0059, 0 12px 20px rgba(255, 20, 147, 0.35);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.15s ease;
+    }
+    .btn-3d-pink:hover:not(:disabled) {
+      filter: brightness(1.08);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 0 #9E0059, 0 15px 25px rgba(255, 20, 147, 0.45);
+    }
+    .btn-3d-pink:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #9E0059, 0 6px 12px rgba(255, 20, 147, 0.3);
+    }
+
+    .btn-3d-dark {
+      background: linear-gradient(180deg, #281D2B 0%, #161118 100%);
+      border: 2px solid #FF69B4;
+      box-shadow: 0 5px 0 #8F1D58, 0 10px 18px rgba(0, 0, 0, 0.5);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+    }
+    .btn-3d-dark:hover:not(:disabled) {
+      background: linear-gradient(180deg, #3A263E 0%, #221725 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 7px 0 #8F1D58, 0 14px 22px rgba(255, 105, 180, 0.25);
+    }
+    .btn-3d-dark:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #8F1D58;
+    }
+
+    /* Animación de manos aplaudiendo */
+    .hand-left {
+      transform-origin: bottom right;
+      transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform: translateX(-18px) rotate(-18deg);
+    }
+    .hand-right {
+      transform-origin: bottom left;
+      transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform: translateX(18px) rotate(18deg) scaleX(-1);
+    }
+    .clapping .hand-left {
+      transform: translateX(6px) rotate(8deg) scale(1.1);
+    }
+    .clapping .hand-right {
+      transform: translateX(-6px) rotate(-8deg) scaleX(-1) scale(1.1);
+    }
+
+    /* Onda expansiva rosa al aplaudir */
+    @keyframes clapRipple {
+      0% {
+        transform: scale(0.4);
+        opacity: 0.95;
+      }
+      100% {
+        transform: scale(2.1);
+        opacity: 0;
+      }
+    }
+    .clap-wave {
+      animation: clapRipple 0.45s ease-out forwards;
+    }
+
+    /* Destello de sílaba activa */
+    .syllable-pill {
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .syllable-active {
+      background: linear-gradient(135deg, #FF69B4, #FF1493);
+      color: #0B090C;
+      transform: scale(1.38) translateY(-8px);
+      box-shadow: 0 0 28px rgba(255, 20, 147, 0.92);
+      border-color: #FFC2E2;
+    }
+
+    /* Animación de vibración suave para error */
+    @keyframes shakeError {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-7px); }
+      80% { transform: translateX(7px); }
+    }
+    .animate-shake {
+      animation: shakeError 0.45s ease-in-out;
+    }
+
+    /* Flotación suave de estrellas decorativas */
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(8deg); }
+    }
+    .float-star {
+      animation: floatSlow 3.5s ease-in-out infinite;
+    }
+
+    /* Canvas de confeti */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between relative">
+
+  <!-- Lienzo para confeti festivo -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Estrellas decorativas de fondo -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-40" aria-hidden="true">
+    <svg class="w-8 h-8 text-rosa-chicle absolute top-16 left-8 float-star" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z"/></svg>
+    <svg class="w-6 h-6 text-rosa-pastel absolute top-36 right-12 float-star" style="animation-delay: 1s;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z"/></svg>
+    <svg class="w-10 h-10 text-rosa-fucsia absolute bottom-24 left-12 float-star" style="animation-delay: 1.8s;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z"/></svg>
+    <svg class="w-7 h-7 text-rosa-chicle absolute bottom-28 right-10 float-star" style="animation-delay: 0.6s;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z"/></svg>
+  </div>
+
+  <!-- Barra superior de navegación y descarga -->
+  <header class="relative z-10 w-full max-w-5xl mx-auto px-4 pt-4 pb-2 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-rosa-chicle to-rosa-fucsia flex items-center justify-center shadow-lg border-2 border-rosa-pastel">
+        <span class="text-2xl" role="img" aria-label="Palmas">👏</span>
+      </div>
+      <div>
+        <h1 class="font-fredoka text-lg sm:text-2xl font-bold text-rosa-pastel leading-tight tracking-wide">
+          Sílabas con Palmas
+        </h1>
+        <p class="text-xs text-rosa-chicle font-semibold">¡Escucha, aplaude y cuenta!</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Marcador rápido en cabecera -->
+      <div id="hud-stats" class="hidden items-center gap-2 sm:gap-3 bg-negro-tarjeta border-2 border-rosa-chicle/60 px-3 py-1.5 rounded-2xl shadow-md">
+        <div class="flex items-center gap-1 text-xs sm:text-sm font-bold text-rosa-pastel">
+          <span>⭐</span>
+          <span id="score-display">0</span>
+        </div>
+        <div class="h-4 w-0.5 bg-rosa-chicle/40"></div>
+        <div class="flex items-center gap-1 text-xs sm:text-sm font-bold text-rosa-chicle">
+          <span>🔥</span>
+          <span id="streak-display">0</span>
+        </div>
+        <div class="h-4 w-0.5 bg-rosa-chicle/40"></div>
+        <div class="text-xs sm:text-sm font-bold text-white">
+          <span id="round-display">1</span>/<span id="total-rounds-display">10</span>
+        </div>
+      </div>
+
+      <!-- Botón de descarga del código HTML -->
+      <button
+        id="btn-download-html"
+        type="button"
+        title="Descargar el juego completo en un archivo HTML"
+        class="btn-3d-dark px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-fredoka font-semibold text-rosa-pastel flex items-center gap-1.5 cursor-pointer"
+      >
+        <svg class="w-4 h-4 text-rosa-chicle" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+        </svg>
+        <span>Descargar Código (.html)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Contenedor principal centrado -->
+  <main class="relative z-10 flex-1 flex items-center justify-center w-full max-w-4xl mx-auto px-4 py-4">
+
+    <!-- PANTALLA 1: BIENVENIDA -->
+    <section id="screen-welcome" class="w-full bg-negro-tarjeta/95 border-4 border-rosa-chicle rounded-3xl p-6 sm:p-10 text-center shadow-[0_0_45px_rgba(255,20,147,0.28)]">
+      <div class="inline-flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-negro-suave border-4 border-rosa-fucsia mb-5 shadow-[0_0_30px_rgba(255,105,180,0.45)]">
+        <span class="text-5xl sm:text-6xl animate-bounce">👏</span>
+      </div>
+
+      <h2 class="font-fredoka text-3xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rosa-pastel via-rosa-chicle to-rosa-fucsia mb-3">
+        ¡El Juego de las Sílabas con Palmas!
+      </h2>
+
+      <p class="text-base sm:text-lg text-rosa-pastel/90 max-w-xl mx-auto mb-6 font-medium leading-relaxed">
+        Observa la palabra, escucha cada palmada y descubre si es
+        <span class="text-rosa-chicle font-bold">monosílaba</span>,
+        <span class="text-rosa-chicle font-bold">bisílaba</span>,
+        <span class="text-rosa-chicle font-bold">trisílaba</span>,
+        <span class="text-rosa-chicle font-bold">cuatrisílaba</span> o
+        <span class="text-rosa-chicle font-bold">polisílaba</span>.
+      </p>
+
+      <!-- Tarjeta informativa de categorías -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 max-w-2xl mx-auto mb-8 text-xs sm:text-sm">
+        <div class="bg-negro-suave border border-rosa-chicle/40 rounded-2xl p-2.5">
+          <div class="font-fredoka font-bold text-rosa-chicle text-base">1 Palmada</div>
+          <div class="text-rosa-pastel">Monosílaba</div>
+        </div>
+        <div class="bg-negro-suave border border-rosa-chicle/40 rounded-2xl p-2.5">
+          <div class="font-fredoka font-bold text-rosa-chicle text-base">2 Palmadas</div>
+          <div class="text-rosa-pastel">Bisílaba</div>
+        </div>
+        <div class="bg-negro-suave border border-rosa-chicle/40 rounded-2xl p-2.5">
+          <div class="font-fredoka font-bold text-rosa-chicle text-base">3 Palmadas</div>
+          <div class="text-rosa-pastel">Trisílaba</div>
+        </div>
+        <div class="bg-negro-suave border border-rosa-chicle/40 rounded-2xl p-2.5">
+          <div class="font-fredoka font-bold text-rosa-chicle text-base">4 Palmadas</div>
+          <div class="text-rosa-pastel">Cuatrisílaba</div>
+        </div>
+        <div class="col-span-2 sm:col-span-1 bg-negro-suave border border-rosa-chicle/40 rounded-2xl p-2.5">
+          <div class="font-fredoka font-bold text-rosa-chicle text-base">5+ Palmadas</div>
+          <div class="text-rosa-pastel">Polisílaba</div>
+        </div>
+      </div>
+
+      <button
+        id="btn-start-game"
+        type="button"
+        class="btn-3d-pink px-10 py-4 rounded-3xl font-fredoka text-2xl sm:text-3xl font-bold text-negro-profundo tracking-wide cursor-pointer inline-flex items-center gap-3"
+      >
+        <span>¡Empezar a Jugar!</span>
+        <span>🎀</span>
+      </button>
+    </section>
+
+    <!-- PANTALLA 2: TABLERO DE JUEGO -->
+    <section id="screen-game" class="hidden w-full bg-negro-tarjeta/95 border-4 border-rosa-chicle rounded-3xl p-5 sm:p-8 shadow-[0_0_45px_rgba(255,20,147,0.28)]">
+
+      <!-- Mensaje guía superior -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-5">
+        <div id="status-banner" class="bg-negro-suave border-2 border-rosa-chicle/50 rounded-2xl px-4 py-2 text-sm sm:text-base font-bold text-rosa-pastel flex items-center gap-2">
+          <span id="status-icon">🎧</span>
+          <span id="status-text">Escucha las palmadas con atención...</span>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <button
+            id="btn-step-syllable"
+            type="button"
+            class="btn-3d-dark px-3.5 py-2 rounded-2xl font-fredoka text-xs sm:text-sm font-semibold text-rosa-chicle flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            title="Escucha cada sílaba una por una con su palmada"
+          >
+            <span>👏</span>
+            <span>Sílaba por sílaba</span>
+          </button>
+
+          <button
+            id="btn-replay-claps"
+            type="button"
+            class="btn-3d-dark px-3.5 py-2 rounded-2xl font-fredoka text-xs sm:text-sm font-semibold text-rosa-pastel flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <span>🔊</span>
+            <span>Repetir palmas y voz</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Escenario central: Manos aplaudiendo + Palabra -->
+      <div class="bg-negro-profundo border-2 border-rosa-fucsia/60 rounded-3xl p-5 sm:p-7 mb-6 flex flex-col items-center justify-center relative overflow-hidden">
+
+        <!-- Contenedor animado de las manos -->
+        <div id="hands-stage" class="relative w-44 h-28 sm:w-52 sm:h-32 flex items-center justify-center mb-3">
+          <!-- Onda expansiva rosada -->
+          <div id="clap-wave-ring" class="hidden absolute w-20 h-20 rounded-full border-4 border-rosa-fucsia bg-rosa-chicle/25 pointer-events-none"></div>
+
+          <!-- Destellos de impacto -->
+          <div id="clap-sparks" class="opacity-0 transition-opacity duration-150 absolute -top-1 text-rosa-pastel font-fredoka font-bold text-lg tracking-widest">
+            ✨ ¡CLAP! ✨
+          </div>
+
+          <!-- Mano izquierda SVG -->
+          <svg class="hand-left w-16 h-16 sm:w-20 sm:h-20 drop-shadow-[0_4px_10px_rgba(255,20,147,0.5)]" viewBox="0 0 64 64" fill="none">
+            <path d="M22 34V14C22 11.8 23.8 10 26 10C28.2 10 30 11.8 30 14V28H32V11C32 8.8 33.8 7 36 7C38.2 7 40 8.8 40 11V28H42V14C42 11.8 43.8 10 46 10C48.2 10 50 11.8 50 14V38C50 48.5 41.5 57 31 57H26C17.2 57 10 49.8 10 41V31C10 28.8 11.8 27 14 27C16.2 27 18 28.8 18 31V36H22V34Z" fill="#FFC2E2" stroke="#FF1493" stroke-width="3" stroke-linejoin="round"/>
+          </svg>
+
+          <!-- Mano derecha SVG (espejada por CSS) -->
+          <svg class="hand-right w-16 h-16 sm:w-20 sm:h-20 drop-shadow-[0_4px_10px_rgba(255,20,147,0.5)]" viewBox="0 0 64 64" fill="none">
+            <path d="M22 34V14C22 11.8 23.8 10 26 10C28.2 10 30 11.8 30 14V28H32V11C32 8.8 33.8 7 36 7C38.2 7 40 8.8 40 11V28H42V14C42 11.8 43.8 10 46 10C48.2 10 50 11.8 50 14V38C50 48.5 41.5 57 31 57H26C17.2 57 10 49.8 10 41V31C10 28.8 11.8 27 14 27C16.2 27 18 28.8 18 31V36H22V34Z" fill="#FF85C8" stroke="#FF1493" stroke-width="3" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <!-- Palabra completa escrita en grande -->
+        <div class="text-center mb-4">
+          <span class="text-xs uppercase tracking-widest text-rosa-chicle font-bold block mb-1">Palabra</span>
+          <h3 id="word-display" class="font-fredoka text-4xl sm:text-6xl font-bold text-white tracking-wider drop-shadow-[0_3px_12px_rgba(255,105,180,0.45)]">
+            MARIPOSA
+          </h3>
+        </div>
+
+        <!-- Fichas visuales de sílabas que se iluminan con cada palmada -->
+        <div id="syllables-container" class="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 min-h-[52px]">
+          <!-- Se rellena dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Pregunta principal -->
+      <div class="text-center mb-4">
+        <p class="font-fredoka text-xl sm:text-2xl font-bold text-rosa-pastel">
+          ¿Cuántas sílabas tiene esta palabra?
+        </p>
+      </div>
+
+      <!-- 5 Botones de clasificación silábica -->
+      <div id="options-grid" class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+        <button type="button" data-type="monosilaba" data-count="1" class="option-btn btn-3d-dark py-3.5 px-3 rounded-2xl flex flex-col items-center justify-center cursor-pointer">
+          <span class="font-fredoka text-lg sm:text-xl font-bold text-rosa-chicle">Monosílaba</span>
+          <span class="text-xs font-bold text-rosa-pastel/90 mt-0.5">1 sílaba 👏</span>
+        </button>
+
+        <button type="button" data-type="bisilaba" data-count="2" class="option-btn btn-3d-dark py-3.5 px-3 rounded-2xl flex flex-col items-center justify-center cursor-pointer">
+          <span class="font-fredoka text-lg sm:text-xl font-bold text-rosa-chicle">Bisílaba</span>
+          <span class="text-xs font-bold text-rosa-pastel/90 mt-0.5">2 sílabas 👏👏</span>
+        </button>
+
+        <button type="button" data-type="trisilaba" data-count="3" class="option-btn btn-3d-dark py-3.5 px-3 rounded-2xl flex flex-col items-center justify-center cursor-pointer">
+          <span class="font-fredoka text-lg sm:text-xl font-bold text-rosa-chicle">Trisílaba</span>
+          <span class="text-xs font-bold text-rosa-pastel/90 mt-0.5">3 sílabas 👏👏👏</span>
+        </button>
+
+        <button type="button" data-type="cuatrisilaba" data-count="4" class="option-btn btn-3d-dark py-3.5 px-3 rounded-2xl flex flex-col items-center justify-center cursor-pointer">
+          <span class="font-fredoka text-lg sm:text-xl font-bold text-rosa-chicle">Cuatrisílaba</span>
+          <span class="text-xs font-bold text-rosa-pastel/90 mt-0.5">4 sílabas 👏👏👏👏</span>
+        </button>
+
+        <button type="button" data-type="polisilaba" data-count="5" class="option-btn btn-3d-dark py-3.5 px-3 rounded-2xl flex flex-col items-center justify-center cursor-pointer">
+          <span class="font-fredoka text-lg sm:text-xl font-bold text-rosa-chicle">Polisílaba</span>
+          <span class="text-xs font-bold text-rosa-pastel/90 mt-0.5">5 o más 👏👏👏👏👏</span>
+        </button>
+      </div>
+
+      <!-- Panel de retroalimentación inmediata -->
+      <div id="feedback-box" class="hidden mt-5 rounded-2xl p-4 border-2 text-center transition-all">
+        <p id="feedback-message" class="font-fredoka text-lg sm:text-xl font-bold mb-3"></p>
+        <button
+          id="btn-next-word"
+          type="button"
+          class="hidden btn-3d-pink px-7 py-2.5 rounded-2xl font-fredoka text-lg font-bold text-negro-profundo cursor-pointer"
+        >
+          Siguiente Palabra ➜
+        </button>
+      </div>
+    </section>
+
+    <!-- PANTALLA 3: RESULTADOS FINALES -->
+    <section id="screen-results" class="hidden w-full bg-negro-tarjeta/95 border-4 border-rosa-chicle rounded-3xl p-7 sm:p-10 text-center shadow-[0_0_45px_rgba(255,20,147,0.35)]">
+      <div class="text-6xl mb-3">🏆🎀</div>
+      <h2 class="font-fredoka text-3xl sm:text-5xl font-bold text-rosa-pastel mb-2">
+        ¡Partida Completada!
+      </h2>
+      <p id="final-encouragement" class="text-base sm:text-lg text-rosa-chicle font-bold mb-6">
+        ¡Eres una estrella contando sílabas con palmas!
+      </p>
+
+      <div class="grid grid-cols-2 gap-4 max-w-md mx-auto mb-8">
+        <div class="bg-negro-profundo border-2 border-rosa-fucsia rounded-2xl p-4">
+          <div class="text-xs uppercase text-rosa-pastel font-bold">Puntaje Total</div>
+          <div id="final-score" class="font-fredoka text-4xl font-bold text-rosa-chicle mt-1">0</div>
+        </div>
+        <div class="bg-negro-profundo border-2 border-rosa-fucsia rounded-2xl p-4">
+          <div class="text-xs uppercase text-rosa-pastel font-bold">Aciertos</div>
+          <div id="final-accuracy" class="font-fredoka text-4xl font-bold text-white mt-1">0/10</div>
+        </div>
+      </div>
+
+      <button
+        id="btn-restart-game"
+        type="button"
+        class="btn-3d-pink px-9 py-4 rounded-3xl font-fredoka text-xl sm:text-2xl font-bold text-negro-profundo cursor-pointer"
+      >
+        ¡Jugar Otra Vez! 👏
+      </button>
+    </section>
+
+  </main>
+
+  <!-- Pie de página -->
+  <footer class="relative z-10 text-center py-3 px-4 text-xs text-rosa-pastel/70">
+    Juego educativo interactivo de conciencia silábica • Audio sintetizado en tiempo real
+  </footer>
+
+  <!-- Caja de notificación flotante (para descargas o avisos sin alert) -->
+  <div id="toast-notification" class="fixed bottom-5 right-5 z-50 hidden bg-negro-tarjeta border-2 border-rosa-chicle text-rosa-pastel px-4 py-3 rounded-2xl shadow-2xl font-bold text-sm flex items-center gap-2">
+    <span>💖</span>
+    <span id="toast-text">Archivo descargado</span>
+  </div>
+
+  <script>
+    /**
+     * ============================================================================
+     * BANCO DE PALABRAS CLASIFICADAS POR NÚMERO DE SÍLABAS
+     * ============================================================================
+     */
+    const WORD_BANK = [
+      // Monosílabas (1 sílaba)
+      { word: "SOL", syllables: ["SOL"], type: "monosilaba", label: "monosílaba" },
+      { word: "PAN", syllables: ["PAN"], type: "monosilaba", label: "monosílaba" },
+      { word: "MAR", syllables: ["MAR"], type: "monosilaba", label: "monosílaba" },
+      { word: "LUZ", syllables: ["LUZ"], type: "monosilaba", label: "monosílaba" },
+      { word: "FLOR", syllables: ["FLOR"], type: "monosilaba", label: "monosílaba" },
+      { word: "PEZ", syllables: ["PEZ"], type: "monosilaba", label: "monosílaba" },
+      { word: "TREN", syllables: ["TREN"], type: "monosilaba", label: "monosílaba" },
+      { word: "SAL", syllables: ["SAL"], type: "monosilaba", label: "monosílaba" },
+      { word: "GOL", syllables: ["GOL"], type: "monosilaba", label: "monosílaba" },
+
+      // Bisílabas (2 sílabas)
+      { word: "LUNA", syllables: ["LU", "NA"], type: "bisilaba", label: "bisílaba" },
+      { word: "MESA", syllables: ["ME", "SA"], type: "bisilaba", label: "bisílaba" },
+      { word: "GATO", syllables: ["GA", "TO"], type: "bisilaba", label: "bisílaba" },
+      { word: "MANO", syllables: ["MA", "NO"], type: "bisilaba", label: "bisílaba" },
+      { word: "ÁRBOL", syllables: ["ÁR", "BOL"], type: "bisilaba", label: "bisílaba" },
+      { word: "NUBE", syllables: ["NU", "BE"], type: "bisilaba", label: "bisílaba" },
+      { word: "CASA", syllables: ["CA", "SA"], type: "bisilaba", label: "bisílaba" },
+      { word: "PERRO", syllables: ["PE", "RRO"], type: "bisilaba", label: "bisílaba" },
+      { word: "TAMBOR", syllables: ["TAM", "BOR"], type: "bisilaba", label: "bisílaba" },
+
+      // Trisílabas (3 sílabas)
+      { word: "PELOTA", syllables: ["PE", "LO", "TA"], type: "trisilaba", label: "trisílaba" },
+      { word: "CONEJOS", syllables: ["CO", "NE", "JOS"], type: "trisilaba", label: "trisílaba" },
+      { word: "CAMINO", syllables: ["CA", "MI", "NO"], type: "trisilaba", label: "trisílaba" },
+      { word: "ESTRELLA", syllables: ["ES", "TRE", "LLA"], type: "trisilaba", label: "trisílaba" },
+      { word: "PALOMA", syllables: ["PA", "LO", "MA"], type: "trisilaba", label: "trisílaba" },
+      { word: "HELADO", syllables: ["HE", "LA", "DO"], type: "trisilaba", label: "trisílaba" },
+      { word: "TORTUGA", syllables: ["TOR", "TU", "GA"], type: "trisilaba", label: "trisílaba" },
+      { word: "MONTAÑA", syllables: ["MON", "TA", "ÑA"], type: "trisilaba", label: "trisílaba" },
+
+      // Cuatrisílabas (4 sílabas)
+      { word: "MARIPOSA", syllables: ["MA", "RI", "PO", "SA"], type: "cuatrisilaba", label: "cuatrisílaba" },
+      { word: "CHOCOLATE", syllables: ["CHO", "CO", "LA", "TE"], type: "cuatrisilaba", label: "cuatrisílaba" },
+      { word: "ELEFANTE", syllables: ["E", "LE", "FAN", "TE"], type: "cuatrisilaba", label: "cuatrisílaba" },
+      { word: "BICICLETA", syllables: ["BI", "CI", "CLE", "TA"], type: "cuatrisilaba", label: "cuatrisílaba" },
+      { word: "DINOSAURIO", syllables: ["DI", "NO", "SAU", "RIO"], type: "cuatrisilaba", label: "cuatrisílaba" },
+      { word: "VENTANITA", syllables: ["VEN", "TA", "NI", "TA"], type: "cuatrisilaba", label: "cuatrisílaba" },
+      { word: "ZANAHORIA", syllables: ["ZA", "NA", "HO", "RIA"], type: "cuatrisilaba", label: "cuatrisílaba" },
+      { word: "MURCIÉLAGO", syllables: ["MUR", "CIÉ", "LA", "GO"], type: "cuatrisilaba", label: "cuatrisílaba" },
+
+      // Polisílabas (5 o más sílabas)
+      { word: "HIPOPÓTAMO", syllables: ["HI", "PO", "PÓ", "TA", "MO"], type: "polisilaba", label: "polisílaba" },
+      { word: "ELECTRICIDAD", syllables: ["E", "LEC", "TRI", "CI", "DAD"], type: "polisilaba", label: "polisílaba" },
+      { word: "MATEMÁTICA", syllables: ["MA", "TE", "MÁ", "TI", "CA"], type: "polisilaba", label: "polisílaba" },
+      { word: "CARACOLITO", syllables: ["CA", "RA", "CO", "LI", "TO"], type: "polisilaba", label: "polisílaba" },
+      { word: "GENEROSIDAD", syllables: ["GE", "NE", "RO", "SI", "DAD"], type: "polisilaba", label: "polisílaba" },
+      { word: "IMAGINACIÓN", syllables: ["I", "MA", "GI", "NA", "CIÓN"], type: "polisilaba", label: "polisílaba" },
+      { word: "UNIVERSITARIO", syllables: ["U", "NI", "VER", "SI", "TA", "RIO"], type: "polisilaba", label: "polisílaba" },
+      { word: "BIBLIOTECARIA", syllables: ["BI", "BLIO", "TE", "CA", "RIA"], type: "polisilaba", label: "polisílaba" }
+    ];
+
+    /**
+     * ============================================================================
+     * MOTOR DE AUDIO PROCEDIMENTAL (WEB AUDIO API) - PALMADAS Y EFECTOS
+     * ============================================================================
+     */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+      }
+
+      init() {
+        try {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+              this.ctx = new AudioCtx();
+            }
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+        } catch (e) {
+          console.warn("Web Audio API no disponible:", e);
+        }
+      }
+
+      /**
+       * Genera un sonido realista y nítido de palmada (clap) usando ruido blanco
+       * filtrado con envolvente percusiva doble (impacto de palmas + resonancia).
+       */
+      playClap() {
+        this.init();
+        if (!this.ctx) return;
+
+        try {
+          const now = this.ctx.currentTime;
+          const duration = 0.22;
+          const sampleRate = this.ctx.sampleRate;
+          const bufferSize = Math.floor(sampleRate * duration);
+          const buffer = this.ctx.createBuffer(1, bufferSize, sampleRate);
+          const data = buffer.getChannelData(0);
+
+          // Ruido blanco moldeado con micro-rebotes de palmada
+          for (let i = 0; i < bufferSize; i++) {
+            const t = i / sampleRate;
+            const white = Math.random() * 2 - 1;
+            // Dos micro-ataques rápidos típicos del choque de manos
+            let env = 0;
+            if (t < 0.012) {
+              env = Math.exp(-t * 140);
+            } else {
+              env = 0.85 * Math.exp(-(t - 0.012) * 26);
+            }
+            data[i] = white * env;
+          }
+
+          const noiseSource = this.ctx.createBufferSource();
+          noiseSource.buffer = buffer;
+
+          // Filtro paso banda para darle cuerpo cálido de manos
+          const bandpass = this.ctx.createBiquadFilter();
+          bandpass.type = 'bandpass';
+          bandpass.frequency.setValueAtTime(1150, now);
+          bandpass.Q.setValueAtTime(1.4, now);
+
+          // Realce sutil de agudos para claridad
+          const highshelf = this.ctx.createBiquadFilter();
+          highshelf.type = 'highshelf';
+          highshelf.frequency.setValueAtTime(2200, now);
+          highshelf.gain.setValueAtTime(4, now);
+
+          const masterGain = this.ctx.createGain();
+          masterGain.gain.setValueAtTime(1.15, now);
+
+          noiseSource.connect(bandpass);
+          bandpass.connect(highshelf);
+          highshelf.connect(masterGain);
+          masterGain.connect(this.ctx.destination);
+
+          noiseSource.start(now);
+        } catch (e) {
+          console.warn("Error al sintetizar palmada:", e);
+        }
+      }
+
+      /**
+       * Melodía alegre ascendente al acertar
+       */
+      playSuccess() {
+        this.init();
+        if (!this.ctx) return;
+
+        try {
+          const notes = [523.25, 659.25, 783.99, 1046.50]; // Do5, Mi5, Sol5, Do6
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const start = this.ctx.currentTime + idx * 0.09;
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, start);
+
+            gain.gain.setValueAtTime(0.001, start);
+            gain.gain.exponentialRampToValueAtTime(0.28, start + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.28);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(start);
+            osc.stop(start + 0.3);
+          });
+        } catch (e) {
+          console.warn("Error en sonido de acierto:", e);
+        }
+      }
+
+      /**
+       * Sonido suave y amigable cuando el estudiante se equivoca
+       */
+      playError() {
+        this.init();
+        if (!this.ctx) return;
+
+        try {
+          const notes = [330, 277.18]; // Mi4 -> Do#4 suave
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const start = this.ctx.currentTime + idx * 0.14;
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, start);
+
+            gain.gain.setValueAtTime(0.001, start);
+            gain.gain.exponentialRampToValueAtTime(0.22, start + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.25);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(start);
+            osc.stop(start + 0.26);
+          });
+        } catch (e) {
+          console.warn("Error en sonido de error:", e);
+        }
+      }
+    }
+
+    /**
+     * ============================================================================
+     * MOTOR DE VOZ FEMENINA EN ESPAÑOL (WEB SPEECH API)
+     * ============================================================================
+     */
+    class FemaleVoiceSpeaker {
+      constructor() {
+        this.synth = window.speechSynthesis || null;
+        this.selectedVoice = null;
+        this.initVoices();
+      }
+
+      initVoices() {
+        if (!this.synth) return;
+
+        const pickVoice = () => {
+          try {
+            const voices = this.synth.getVoices();
+            if (!voices || voices.length === 0) return;
+
+            // Filtrar voces en español (es-ES, es-MX, es-US, es-419, es-BO, etc.)
+            const spanishVoices = voices.filter(v =>
+              v.lang && v.lang.toLowerCase().startsWith('es')
+            );
+
+            // Nombres habituales de voces femeninas claras en navegadores
+            const femaleKeywords = [
+              'google español', 'helena', 'sabina', 'paulina', 'monica',
+              'mónica', 'laura', 'lucia', 'lucía', 'carmen', 'sofia',
+              'sofía', 'valentina', 'camila', 'elena', 'maria', 'maría',
+              'isabela', 'ximena', 'female', 'mujer', 'natural'
+            ];
+
+            // Priorizar voces femeninas en español
+            let best = spanishVoices.find(v =>
+              femaleKeywords.some(kw => v.name.toLowerCase().includes(kw))
+            );
+
+            // Evitar voces masculinas conocidas si no hubo coincidencia explícita
+            if (!best && spanishVoices.length > 0) {
+              const maleKeywords = ['jorge', 'diego', 'carlos', 'enrique', 'pablo', 'mateo', 'male', 'hombre'];
+              best = spanishVoices.find(v =>
+                !maleKeywords.some(kw => v.name.toLowerCase().includes(kw))
+              ) || spanishVoices[0];
+            }
+
+            this.selectedVoice = best || null;
+          } catch (e) {
+            console.warn("No se pudieron cargar las voces:", e);
+          }
+        };
+
+        pickVoice();
+        if (typeof this.synth.onvoiceschanged !== 'undefined') {
+          this.synth.onvoiceschanged = pickVoice;
+        }
+      }
+
+      cancel() {
+        try {
+          if (this.synth) {
+            this.synth.cancel();
+          }
+        } catch (e) {
+          // Ignorar errores de cancelación
+        }
+      }
+
+      /**
+       * Pronuncia estrictamente UNA sílaba aislada de forma limpia y natural,
+       * sin añadir palabras ni puntuaciones que alteren su entonación silábica.
+       */
+      speakSyllable(rawSyllable) {
+        const pureSyllable = getPureSyllableArticulation(rawSyllable);
+        return this.speak(pureSyllable, {
+          rate: 0.88,
+          pitch: 1.22,
+          isPureSyllable: true
+        });
+      }
+
+      /**
+       * Pronuncia un texto con voz femenina dulce y clara.
+       * Devuelve una promesa que se resuelve al terminar o tras un tiempo seguro.
+       */
+      speak(text, { rate = 0.96, pitch = 1.16 } = {}) {
+        return new Promise((resolve) => {
+          if (!this.synth || !text) {
+            setTimeout(resolve, 450);
+            return;
+          }
+
+          try {
+            this.synth.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = (this.selectedVoice && this.selectedVoice.lang) || 'es-ES';
+            if (this.selectedVoice) {
+              utterance.voice = this.selectedVoice;
+            }
+            utterance.rate = rate;
+            utterance.pitch = pitch;
+            utterance.volume = 1.0;
+
+            let finished = false;
+            const done = () => {
+              if (!finished) {
+                finished = true;
+                resolve();
+              }
+            };
+
+            utterance.onend = done;
+            utterance.onerror = done;
+
+            // Respaldo de seguridad calibrado para frases completas
+            const fallbackMs = Math.max(1050, text.length * 85);
+            setTimeout(done, fallbackMs);
+
+            this.synth.speak(utterance);
+          } catch (e) {
+            console.warn("Error en síntesis de voz:", e);
+            setTimeout(resolve, 400);
+          }
+        });
+      }
+    }
+
+    /**
+     * ============================================================================
+     * EFECTO FESTIVO DE CONFETI ROSA, NEGRO Y BLANCO
+     * ============================================================================
+     */
+    class ConfettiManager {
+      constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.particles = [];
+        this.animId = null;
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+
+      burst() {
+        const colors = ['#FF1493', '#FF69B4', '#FFC2E2', '#FFFFFF', '#161118'];
+        for (let i = 0; i < 85; i++) {
+          this.particles.push({
+            x: this.canvas.width / 2 + (Math.random() - 0.5) * 160,
+            y: this.canvas.height * 0.45,
+            vx: (Math.random() - 0.5) * 14,
+            vy: (Math.random() - 1.15) * 14,
+            size: Math.random() * 8 + 5,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            rotation: Math.random() * 360,
+            vRot: (Math.random() - 0.5) * 12,
+            alpha: 1
+          });
+        }
+        if (!this.animId) {
+          this.animate();
+        }
+      }
+
+      animate() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.35; // Gravedad
+          p.rotation += p.vRot;
+          p.alpha -= 0.013;
+
+          this.ctx.save();
+          this.ctx.globalAlpha = Math.max(0, p.alpha);
+          this.ctx.translate(p.x, p.y);
+          this.ctx.rotate((p.rotation * Math.PI) / 180);
+          this.ctx.fillStyle = p.color;
+          this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+          this.ctx.restore();
+        });
+
+        this.particles = this.particles.filter(p => p.alpha > 0);
+
+        if (this.particles.length > 0) {
+          this.animId = requestAnimationFrame(() => this.animate());
+        } else {
+          this.animId = null;
+        }
+      }
+    }
+
+    /**
+     * ============================================================================
+     * CONTROLADOR PRINCIPAL DEL JUEGO
+     * ============================================================================
+     */
+    const sound = new SoundEngine();
+    const speaker = new FemaleVoiceSpeaker();
+    const confetti = new ConfettiManager('confetti-canvas');
+
+    const TOTAL_ROUNDS = 10;
+    let gameDeck = [];
+    let currentRoundIndex = 0;
+    let score = 0;
+    let streak = 0;
+    let firstTryCorrectCount = 0;
+    let hadMistakeOnCurrentWord = false;
+    let isPerformingClaps = false;
+    let roundSolved = false;
+    let sequenceToken = 0; // Cancela secuencias anteriores si el usuario reinicia o repite
+
+    // Referencias DOM
+    const screenWelcome = document.getElementById('screen-welcome');
+    const screenGame = document.getElementById('screen-game');
+    const screenResults = document.getElementById('screen-results');
+    const hudStats = document.getElementById('hud-stats');
+
+    const scoreDisplay = document.getElementById('score-display');
+    const streakDisplay = document.getElementById('streak-display');
+    const roundDisplay = document.getElementById('round-display');
+    const totalRoundsDisplay = document.getElementById('total-rounds-display');
+
+    const statusIcon = document.getElementById('status-icon');
+    const statusText = document.getElementById('status-text');
+    const handsStage = document.getElementById('hands-stage');
+    const clapWaveRing = document.getElementById('clap-wave-ring');
+    const clapSparks = document.getElementById('clap-sparks');
+    const wordDisplay = document.getElementById('word-display');
+    const syllablesContainer = document.getElementById('syllables-container');
+    const optionsGrid = document.getElementById('options-grid');
+    const optionButtons = document.querySelectorAll('.option-btn');
+    const feedbackBox = document.getElementById('feedback-box');
+    const feedbackMessage = document.getElementById('feedback-message');
+    const btnNextWord = document.getElementById('btn-next-word');
+    const btnReplayClaps = document.getElementById('btn-replay-claps');
+    const btnStepSyllable = document.getElementById('btn-step-syllable');
+
+    /**
+     * Selecciona un mazo equilibrado de 10 palabras mezclando las 5 categorías
+     */
+    function buildBalancedDeck() {
+      const categories = ['monosilaba', 'bisilaba', 'trisilaba', 'cuatrisilaba', 'polisilaba'];
+      let chosen = [];
+
+      categories.forEach(cat => {
+        const pool = WORD_BANK.filter(item => item.type === cat);
+        const shuffled = [...pool].sort(() => Math.random() - 0.5);
+        chosen.push(shuffled[0], shuffled[1]);
+      });
+
+      return chosen.sort(() => Math.random() - 0.5).slice(0, TOTAL_ROUNDS);
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function updateHUD() {
+      scoreDisplay.textContent = score;
+      streakDisplay.textContent = streak;
+      roundDisplay.textContent = Math.min(currentRoundIndex + 1, TOTAL_ROUNDS);
+      totalRoundsDisplay.textContent = TOTAL_ROUNDS;
+    }
+
+    function setStatus(icon, text) {
+      statusIcon.textContent = icon;
+      statusText.textContent = text;
+    }
+
+    function setOptionsEnabled(enabled) {
+      optionButtons.forEach(btn => {
+        btn.disabled = !enabled;
+        if (!enabled) {
+          btn.classList.add('opacity-60', 'cursor-not-allowed');
+        } else {
+          btn.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+      });
+    }
+
+    /**
+     * Dispara la animación visual de choque de manos, onda expansiva y sonido de palmada
+     */
+    function triggerVisualClap() {
+      sound.playClap();
+
+      handsStage.classList.remove('clapping');
+      void handsStage.offsetWidth;
+      handsStage.classList.add('clapping');
+
+      clapWaveRing.classList.remove('hidden', 'clap-wave');
+      void clapWaveRing.offsetWidth;
+      clapWaveRing.classList.add('clap-wave');
+
+      clapSparks.classList.remove('opacity-0');
+      clapSparks.classList.add('opacity-100');
+
+      setTimeout(() => {
+        handsStage.classList.remove('clapping');
+        clapSparks.classList.remove('opacity-100');
+        clapSparks.classList.add('opacity-0');
+      }, 240);
+    }
+
+    /**
+     * Ejecuta la secuencia completa de lectura silábica con palmas y pregunta final.
+     * En cada sílaba agranda la ficha y reproduce solo la palmada; al terminar todas
+     * las palmadas pregunta en voz: "¿De cuántas sílabas está compuesta esta palabra?".
+     */
+    async function performWordClapSequence(askQuestion = true) {
+      const myToken = ++sequenceToken;
+      isPerformingClaps = true;
+      btnReplayClaps.disabled = true;
+      btnStepSyllable.disabled = true;
+
+      const currentItem = gameDeck[currentRoundIndex];
+      const pills = syllablesContainer.querySelectorAll('.syllable-pill');
+      pills.forEach(p => p.classList.remove('syllable-active'));
+
+      setStatus('👏', '¡Escucha y cuenta cada palmada!');
+      await sleep(350);
+      if (myToken !== sequenceToken) return;
+
+      for (let i = 0; i < currentItem.syllables.length; i++) {
+        if (myToken !== sequenceToken) return;
+
+        // Agrandar e iluminar la sílaba actual con su palmada de mano
+        pills.forEach(p => p.classList.remove('syllable-active'));
+        if (pills[i]) {
+          pills[i].classList.add('syllable-active');
+        }
+
+        triggerVisualClap();
+
+        // Mantener la sílaba agrandada brevemente antes de pasar a la siguiente palmada
+        await sleep(520);
+        if (myToken !== sequenceToken) return;
+
+        if (pills[i]) {
+          pills[i].classList.remove('syllable-active');
+        }
+
+        await sleep(220);
+      }
+
+      if (myToken !== sequenceToken) return;
+
+      isPerformingClaps = false;
+      btnReplayClaps.disabled = false;
+      btnStepSyllable.disabled = false;
+
+      if (!roundSolved) {
+        setOptionsEnabled(true);
+      }
+
+      if (askQuestion && !roundSolved) {
+        const questionText = '¿De cuántas sílabas está compuesta esta palabra?';
+        setStatus('❓', questionText);
+        await speaker.speak(questionText, { rate: 0.96, pitch: 1.15 });
+      }
+    }
+
+    /**
+     * Permite al estudiante escuchar la palabra sílaba por sílaba con pausa entre golpes,
+     * agrandando cada sílaba con su palmada de mano y sin pronunciar las sílabas.
+     */
+    async function performStepByStepSyllables() {
+      if (isPerformingClaps) return;
+      const myToken = ++sequenceToken;
+      isPerformingClaps = true;
+      btnReplayClaps.disabled = true;
+      btnStepSyllable.disabled = true;
+
+      const currentItem = gameDeck[currentRoundIndex];
+      const pills = syllablesContainer.querySelectorAll('.syllable-pill');
+      pills.forEach(p => p.classList.remove('syllable-active'));
+
+      setStatus('👏', 'Modo sílaba por sílaba: ¡observa y escucha cada palmada!');
+
+      for (let i = 0; i < currentItem.syllables.length; i++) {
+        if (myToken !== sequenceToken) return;
+        pills.forEach(p => p.classList.remove('syllable-active'));
+        if (pills[i]) pills[i].classList.add('syllable-active');
+
+        triggerVisualClap();
+        await sleep(620);
+        if (myToken !== sequenceToken) return;
+
+        if (pills[i]) pills[i].classList.remove('syllable-active');
+        await sleep(420);
+      }
+
+      isPerformingClaps = false;
+      btnReplayClaps.disabled = false;
+      btnStepSyllable.disabled = false;
+    }
+
+    /**
+     * Carga la ronda actual en pantalla
+     */
+    function loadRound() {
+      roundSolved = false;
+      hadMistakeOnCurrentWord = false;
+      updateHUD();
+
+      const currentItem = gameDeck[currentRoundIndex];
+      wordDisplay.textContent = currentItem.word;
+
+      // Renderizar fichas de sílabas (ocultas como signos '?' hasta que suenen, o visibles con guiones)
+      syllablesContainer.innerHTML = '';
+      currentItem.syllables.forEach((syl, index) => {
+        const badge = document.createElement('div');
+        badge.className = 'syllable-pill px-4 py-2 rounded-2xl bg-negro-suave border-2 border-rosa-chicle/60 font-fredoka text-xl sm:text-2xl font-bold text-rosa-pastel shadow-md';
+        badge.textContent = syl;
+        badge.dataset.index = index;
+        syllablesContainer.appendChild(badge);
+      });
+
+      // Resetear botones y caja de feedback
+      optionButtons.forEach(btn => {
+        btn.classList.remove('ring-4', 'ring-green-400', 'ring-red-400', 'animate-shake');
+      });
+      feedbackBox.classList.add('hidden');
+      btnNextWord.classList.add('hidden');
+      setOptionsEnabled(false);
+
+      // Iniciar demostración automática con palmas
+      performWordClapSequence(true);
+    }
+
+    /**
+     * Maneja la respuesta seleccionada por el estudiante
+     */
+    async function handleOptionSelect(btn) {
+      if (roundSolved) return;
+
+      const selectedType = btn.dataset.type;
+      const currentItem = gameDeck[currentRoundIndex];
+      const count = currentItem.syllables.length;
+
+      // Cancelar voz pendiente antes de dar retroalimentación
+      sequenceToken++;
+      speaker.cancel();
+      isPerformingClaps = false;
+      btnReplayClaps.disabled = false;
+
+      if (selectedType === currentItem.type) {
+        // ¡RESPUESTA CORRECTA!
+        roundSolved = true;
+        setOptionsEnabled(false);
+
+        btn.classList.add('ring-4', 'ring-green-400');
+        sound.playSuccess();
+        confetti.burst();
+
+        if (!hadMistakeOnCurrentWord) {
+          score += 100 + streak * 10;
+          streak += 1;
+          firstTryCorrectCount += 1;
+        } else {
+          score += 50;
+        }
+        updateHUD();
+
+        const syllableWord = count === 1 ? '1 sílaba' : `${count} sílabas`;
+        const congratsText = `¡Excelente! Tiene ${syllableWord}, es una palabra ${currentItem.label}.`;
+
+        feedbackBox.className = 'mt-5 rounded-2xl p-4 border-2 border-rosa-chicle bg-negro-suave text-center shadow-[0_0_25px_rgba(255,105,180,0.3)]';
+        feedbackMessage.className = 'font-fredoka text-lg sm:text-2xl font-bold text-rosa-pastel mb-3';
+        feedbackMessage.textContent = `🎉 ${congratsText}`;
+        feedbackBox.classList.remove('hidden');
+
+        btnNextWord.textContent = currentRoundIndex + 1 < TOTAL_ROUNDS ? 'Siguiente Palabra ➜' : 'Ver Resultados 🏆';
+        btnNextWord.classList.remove('hidden');
+
+        setStatus('🌟', '¡Muy bien! Haz clic en continuar.');
+        await speaker.speak(congratsText, { rate: 0.98, pitch: 1.2 });
+
+      } else {
+        // RESPUESTA INCORRECTA - ANIMAR A INTENTARLO DE NUEVO
+        hadMistakeOnCurrentWord = true;
+        streak = 0;
+        updateHUD();
+
+        sound.playError();
+        btn.classList.remove('animate-shake');
+        void btn.offsetWidth;
+        btn.classList.add('animate-shake', 'ring-4', 'ring-red-400');
+
+        setTimeout(() => {
+          btn.classList.remove('ring-4', 'ring-red-400');
+        }, 900);
+
+        feedbackBox.className = 'mt-5 rounded-2xl p-4 border-2 border-rosa-fucsia bg-negro-profundo text-center';
+        feedbackMessage.className = 'font-fredoka text-base sm:text-xl font-bold text-rosa-chicle';
+        feedbackMessage.textContent = '💖 ¡Casi! Escucha las palmas otra vez e inténtalo de nuevo.';
+        feedbackBox.classList.remove('hidden');
+        btnNextWord.classList.add('hidden');
+
+        await speaker.speak('¡Casi! Escucha las palmas otra vez.', { rate: 0.96, pitch: 1.15 });
+        if (!roundSolved) {
+          performWordClapSequence(false);
+        }
+      }
+    }
+
+    /**
+     * Inicia o reinicia una partida completa
+     */
+    function startNewGame() {
+      sound.init();
+      speaker.initVoices();
+
+      gameDeck = buildBalancedDeck();
+      currentRoundIndex = 0;
+      score = 0;
+      streak = 0;
+      firstTryCorrectCount = 0;
+
+      screenWelcome.classList.add('hidden');
+      screenResults.classList.add('hidden');
+      screenGame.classList.remove('hidden');
+      hudStats.classList.remove('hidden');
+      hudStats.classList.add('flex');
+
+      loadRound();
+    }
+
+    /**
+     * Muestra la pantalla final de resultados
+     */
+    function showFinalResults() {
+      screenGame.classList.add('hidden');
+      screenResults.classList.remove('hidden');
+
+      document.getElementById('final-score').textContent = score;
+      document.getElementById('final-accuracy').textContent = `${firstTryCorrectCount}/${TOTAL_ROUNDS}`;
+
+      const msg = firstTryCorrectCount >= 8
+        ? '¡Increíble! Eres una campeona o campeón de las sílabas con palmas.'
+        : '¡Muy buen trabajo! Sigue practicando tus palmadas para mejorar aún más.';
+
+      document.getElementById('final-encouragement').textContent = msg;
+      confetti.burst();
+      sound.playSuccess();
+      speaker.speak(`¡Felicidades! Terminaste el juego con ${score} puntos.`, { rate: 0.98, pitch: 1.18 });
+    }
+
+    /**
+     * Muestra una notificación temporal no intrusiva
+     */
+    function showToast(message) {
+      const toast = document.getElementById('toast-notification');
+      const toastText = document.getElementById('toast-text');
+      toastText.textContent = message;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3200);
+    }
+
+    /**
+     * Descarga el código fuente completo del documento actual como archivo .html
+     */
+    function downloadSourceCode() {
+      try {
+        const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'El_Juego_de_las_Silabas_con_Palmas.html';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast('¡Código descargado como El_Juego_de_las_Silabas_con_Palmas.html!');
+      } catch (e) {
+        console.error("Error al descargar el archivo HTML:", e);
+        showToast('No se pudo iniciar la descarga en este navegador.');
+      }
+    }
+
+    // Asignación de eventos de interfaz
+    document.getElementById('btn-start-game').addEventListener('click', startNewGame);
+    document.getElementById('btn-restart-game').addEventListener('click', startNewGame);
+    document.getElementById('btn-download-html').addEventListener('click', downloadSourceCode);
+
+    btnReplayClaps.addEventListener('click', () => {
+      if (!isPerformingClaps) {
+        performWordClapSequence(!roundSolved);
+      }
+    });
+
+    btnStepSyllable.addEventListener('click', () => {
+      performStepByStepSyllables();
+    });
+
+    optionButtons.forEach(btn => {
+      btn.addEventListener('click', () => handleOptionSelect(btn));
+    });
+
+    btnNextWord.addEventListener('click', () => {
+      currentRoundIndex += 1;
+      if (currentRoundIndex < TOTAL_ROUNDS) {
+        loadRound();
+      } else {
+        showFinalResults();
+      }
+    });
+  </script>
+</body>
+</html>
